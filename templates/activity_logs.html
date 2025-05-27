@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}Aktivite Kayıtları - PlateVision{% endblock %}
+
+{% block head_extra %}
+<style>
+    .filter-form-logs .form-group { margin-bottom: 10px; }
+    .filter-form-logs label { font-size: 0.9em; margin-bottom: 3px; }
+    .pagination { margin-top: 20px; text-align: center; }
+    .pagination a, .pagination span { display: inline-block; padding: 5px 10px; margin: 0 2px; border: 1px solid #ddd; text-decoration: none; color: #0779e4; border-radius: 3px;}
+    .pagination span.current { background-color: #0779e4; color: white; border-color: #0779e4; }
+    .pagination a:hover { background-color: #f0f0f0; }
+    pre.json-details { background-color: #f8f9fa; padding: 10px; border-radius: 4px; white-space: pre-wrap; word-break: break-all; font-size: 0.9em; max-height: 100px; overflow-y: auto; border: 1px solid #eee;}
+    td img.log-thumbnail { max-width: 70px; max-height: 45px; } /* CSS dosyasındakiyle çakışabilir, biri seçilmeli */
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="header-section">
+    <h1>Araç Aktivite Kayıtları (Toplam Filtrelenen: {{ total_logs }})</h1>
+</div>
+
+<div class="form-container filter-form-logs">
+    <h4>Filtrele</h4>
+    <form method="GET" action="{{ url_for('activity_logs_route') }}">
+        <div style="display: flex; flex-wrap: wrap; gap: 15px; align-items: flex-end;">
+            <div class="form-group" style="flex: 1 1 150px;">
+                <label for="start_date">Başlangıç Tarihi:</label>
+                <input type="date" id="start_date" name="start_date" value="{{ f_start_date or '' }}" class="form-control form-control-sm">
+            </div>
+            <div class="form-group" style="flex: 1 1 150px;">
+                <label for="end_date">Bitiş Tarihi:</label>
+                <input type="date" id="end_date" name="end_date" value="{{ f_end_date or '' }}" class="form-control form-control-sm">
+            </div>
+            <div class="form-group" style="flex: 1 1 200px;">
+                <label for="event_type_filter">Olay Türü (içeren):</label> {# Name'i f_event_type ile eşleşmeli (app.py) #}
+                <input type="text" id="event_type_filter" name="event_type_filter" value="{{ f_event_type or '' }}" placeholder="örn: KAMYON_GIRIS..." class="form-control form-control-sm">
+                {# Veya distinct event types ile dropdown:
+                <select id="event_type_filter" name="event_type_filter" class="form-control form-control-sm">
+                    <option value="">Tümü</option>
+                    {% for etype in distinct_event_types %}
+                    <option value="{{ etype }}" {% if f_event_type == etype %}selected{% endif %}>{{ etype }}</option>
+                    {% endfor %}
+                </select>
+                #}
+            </div>
+            <div class="form-group" style="flex: 1 1 150px;">
+                <label for="plate_filter">Plaka (içeren):</label> {# Name'i f_plate ile eşleşmeli #}
+                <input type="text" id="plate_filter" name="plate_filter" value="{{ f_plate or '' }}" placeholder="Plaka ara..." class="form-control form-control-sm">
+            </div>
+            <div class="form-group" style="flex: 1 1 120px;">
+                <label for="vehicle_type_filter_log">Araç Türü:</label> {# Name'i f_vehicle_type ile eşleşmeli #}
+                <select id="vehicle_type_filter_log" name="vehicle_type_filter_log" class="form-control form-control-sm">
+                    <option value="">Tümü</option>
+                    <option value="truck" {% if f_vehicle_type == 'truck' %}selected{% endif %}>Kamyon</option>
+                    <option value="car" {% if f_vehicle_type == 'car' %}selected{% endif %}>Otomobil</option>
+                    <option value="unknown" {% if f_vehicle_type == 'unknown' %}selected{% endif %}>Bilinmeyen</option>
+                </select>
+            </div>
+            <div class="form-group">
+                 <button type="submit" class="btn btn-primary btn-sm">Filtrele</button>
+                 <a href="{{ url_for('activity_logs_route') }}" class="btn btn-sm" style="background-color:#6c757d;">Temizle</a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div class="table-container">
+    {% if logs %}
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th><th>Zaman</th><th>Olay Türü</th><th>Plaka</th><th>Araç</th><th>Görsel</th><th>Detaylar Özeti</th><th>İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log_entry in logs %}
+                <tr>
+                    <td>{{ log_entry.id }}</td>
+                    <td>{{ log_entry.timestamp.strftime('%Y-%m-%d %H:%M:%S') if log_entry.timestamp and hasattr(log_entry.timestamp, 'strftime') else (log_entry.timestamp or '-') }}</td>
+                    <td>{{ log_entry.event_type }}</td>
+                    <td>{{ log_entry.plate_number or '-' }}</td>
+                    <td>{{ log_entry.vehicle_type_detected.upper() if log_entry.vehicle_type_detected else '-' }}</td>
+                    <td>
+                        {% if log_entry.image_path %}
+                            <a href="{{ url_for('static', filename=log_entry.image_path) }}" target="_blank" title="Görseli Görüntüle"><img src="{{ url_for('static', filename=log_entry.image_path) }}" alt="log" class="log-thumbnail"></a>
+                        {% else %}<span style="color:#999;">Yok</span>{% endif %}
+                    </td>
+                    <td style="font-size:0.85em; max-width: 200px;">
+                        {# Detayların kısa bir özetini gösterelim #}
+                        {% if log_entry.details %}
+                            {% set details_dict = {} %}
+                            {% if log_entry.details is string %}
+                                {% DENE: json.loads(log_entry.details) %}
+                                {% TRYCATCH %}
+                                {% set details_dict = {"raw": log_entry.details[:70] + "..." if log_entry.details|length > 70 else log_entry.details} %}
+                                {% ENDTRYCATCH %}
+                            {% elif log_entry.details is mapping %} {# Eğer zaten dict ise #}
+                                {% set details_dict = log_entry.details %}
+                            {% endif %}
+
+                            {% if details_dict.track_id is defined %}Track ID: {{ details_dict.track_id }}{% endif %}
+                            {% if details_dict.corrected_plate is defined %} Düzeltildi: {{ details_dict.corrected_plate }}{% endif %}
+                            {% if details_dict.raw %} {{ details_dict.raw }} {% endif %}
+
+                        {% else %}-{% endif %}
+                    </td>
+                    <td><a href="{{ url_for('log_detail_route', log_id=log_entry.id) }}" class="btn btn-sm btn-info" title="Bu logun detaylarını gör">Detay</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        {% if total_pages > 1 %}
+        <div class="pagination">
+            {% set q_args = request.args.to_dict() %}
+            {% if current_page > 1 %}
+                <a href="{{ url_for('activity_logs_route', page=1, **q_args) }}">«</a>
+                <a href="{{ url_for('activity_logs_route', page=current_page-1, **q_args) }}">‹</a>
+            {% else %}
+                <span class="disabled">«</span> <span class="disabled">‹</span>
+            {% endif %}
+            
+            {% set H = 2 %} {# Current page etrafında gösterilecek sayfa sayısı #}
+            {% for p in range([1, current_page - H]|max, [total_pages, current_page + H]|min + 1) %}
+                {% if p == current_page %} <span class="current">{{ p }}</span>
+                {% else %} <a href="{{ url_for('activity_logs_route', page=p, **q_args) }}">{{ p }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if current_page < total_pages %}
+                <a href="{{ url_for('activity_logs_route', page=current_page+1, **q_args) }}">›</a>
+                <a href="{{ url_for('activity_logs_route', page=total_pages, **q_args) }}">»</a>
+            {% else %}
+                 <span class="disabled">›</span> <span class="disabled">»</span>
+            {% endif %}
+        </div>
+        <p style="text-align:center; font-size:0.9em; color:#777;">Sayfa {{ current_page }} / {{ total_pages }}</p>
+        {% endif %}
+
+    {% else %}<p>Filtreye uygun veya kayıtlı aktivite bulunmamaktadır.</p>{% endif %}
+</div>
+{% endblock %}

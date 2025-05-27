@@ -1,0 +1,93 @@
+<!-- PlateVision/templates/manage_plates.html -->
+{% extends "base.html" %}
+
+{% block title %}Plaka Yönetimi - PlateVision{% endblock %}
+
+{% block content %}
+    <div class="header-section">
+        <h1>Kayıtlı Plakaları Yönet</h1>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="form-container">
+        <h2>Yeni Plaka Ekle</h2>
+        <form method="POST" action="{{ url_for('manage_plates_route') }}">
+            <div class="form-group">
+                <label for="plate_number">Plaka Numarası:</label>
+                <input type="text" id="plate_number" name="plate_number" required
+                       pattern="[A-Za-z0-9\s]+" title="Sadece harf, rakam ve boşluk giriniz.">
+            </div>
+            <div class="form-group">
+                <label for="vehicle_type">Araç Türü:</label>
+                <select id="vehicle_type" name="vehicle_type" required>
+                    <option value="truck">Kamyon/TIR</option>
+                    <option value="car">Otomobil</option>
+                    <!-- İleride başka türler eklenebilir -->
+                </select>
+            </div>
+            <div class="form-group">
+                <input type="checkbox" id="is_authorized" name="is_authorized" value="yes">
+                <label for="is_authorized" style="display: inline-block; font-weight: normal; margin-left: 5px;">Yetkili Giriş İzni Var mı?</label>
+            </div>
+            <button type="submit" name="action" value="add_plate" class="btn btn-primary">Plaka Ekle</button>
+        </form>
+    </div>
+
+    <div class="table-container">
+        <h2>Kayıtlı Plakalar</h2>
+        {% if plates %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Plaka Numarası</th>
+                        <th>Araç Türü</th>
+                        <th>Yetki Durumu</th>
+                        <th>Eklenme Tarihi</th>
+                        <th>İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for plate in plates %}
+                    <tr>
+                        <td>{{ plate.id }}</td>
+                        <td>{{ plate.plate_number }}</td>
+                        <td>
+                            {% if plate.vehicle_type == 'truck' %}Kamyon/TIR
+                            {% elif plate.vehicle_type == 'car' %}Otomobil
+                            {% else %}{{ plate.vehicle_type }}{% endif %}
+                        </td>
+                        <td>
+                            {% if plate.is_authorized == 1 %}
+                                <span style="color: green; font-weight: bold;">Yetkili</span>
+                            {% else %}
+                                <span style="color: red;">Yetkisiz</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ plate.added_date.strftime('%Y-%m-%d %H:%M:%S') if plate.added_date else '-' }}</td>
+                        <td>
+                            <form method="POST" action="{{ url_for('manage_plates_route') }}" style="display:inline;">
+                                <input type="hidden" name="plate_id_to_delete" value="{{ plate.id }}">
+                                <button type="submit" name="action" value="delete_plate" class="btn btn-danger btn-sm"
+                                        onclick="return confirm('Bu plakayı silmek istediğinizden emin misiniz? ID: {{ plate.id }}');">
+                                    Sil
+                                </button>
+                            </form>
+                            <!-- Düzenleme butonu eklenebilir -->
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>Henüz kayıtlı plaka bulunmamaktadır.</p>
+        {% endif %}
+    </div>
+{% endblock %}

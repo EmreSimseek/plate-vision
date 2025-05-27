@@ -1,0 +1,369 @@
+/* PlateVision/static/css/style.css */
+body {
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f7f6;
+    color: #333;
+    line-height: 1.6;
+}
+
+.container {
+    width: 90%;
+    max-width: 1100px; /* Ana içerik genişliği */
+    margin: auto;
+    overflow: hidden;
+    padding: 0 20px;
+}
+
+/* Navigation */
+nav {
+    background: #333;
+    color: #fff;
+    padding: 10px 0;
+    border-bottom: #0779e4 3px solid;
+}
+
+nav .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+nav a.nav-brand {
+    color: #fff;
+    text-decoration: none;
+    font-size: 1.5em;
+    font-weight: bold;
+}
+
+nav ul {
+    padding: 0;
+    list-style: none;
+    margin: 0;
+}
+
+nav ul li {
+    display: inline;
+    margin-left: 20px;
+}
+
+nav ul li a {
+    color: #fff;
+    text-decoration: none;
+    font-size: 1.1em;
+}
+
+nav ul li a:hover {
+    color: #0779e4;
+}
+
+/* Main Content */
+main {
+    padding: 20px 0;
+}
+
+.header-section {
+    text-align: center;
+    margin-bottom: 30px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+.header-section h1 {
+    color: #333; /* Orijinal renk */
+}
+.header-section p small { /* ROI uyarı mesajı için biraz stil */
+    font-size: 0.9em;
+}
+.header-section p small a {
+    color: #0779e4;
+    text-decoration: none;
+}
+.header-section p small a:hover {
+    text-decoration: underline;
+}
+
+
+/* Video Container & Video Feed Image */
+.video-container {
+    text-align: center;
+    margin-bottom: 20px;
+    background-color: #000; /* Siyah arka plan */
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    /* Video boyutunu kontrol etmek için */
+    width: 100%; /* Konteynerin genişliğine yay */
+    max-width: 720px; /* Maksimum genişlik (örneğin) */
+    /* Dikey videolar için max-height da düşünülebilir,
+       ama aspect-ratio'yu korumak için genellikle width kontrolü yeterlidir. */
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#video_feed_img {
+    display: block; /* Kenar boşlukları ve hizalamayı kolaylaştırır */
+    width: 100%;    /* .video-container'ın genişliğine tam sığsın */
+    height: auto;   /* En/boy oranını korusun */
+    max-height: 75vh; /* Ekran yüksekliğinin %75'ini geçmesin (özellikle dikey videolar için) */
+    object-fit: contain; /* Resim taşmadan, en/boy oranını koruyarak sığar */
+    border: 2px solid #555; /* Biraz daha belirgin kenarlık */
+    border-radius: 5px;
+    background-color: #111; /* Resim yüklenene kadar koyu gri/siyah */
+}
+
+/* Status Box */
+.status-box {
+    padding: 15px;
+    margin-top: 20px;
+    border-radius: 5px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 1.2em;
+    border: 1px solid transparent;
+    white-space: pre-wrap; /* Satır sonlarını koru */
+}
+.status-box.neutral { background-color: #e9ecef; color: #495057; border-color: #ced4da; }
+.status-box.success { background-color: #d4edda; color: #155724; border-color: #c3e6cb; }
+.status-box.danger  { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+.status-box.warning { background-color: #fff3cd; color: #856404; border-color: #ffeeba; }
+.status-box.info    { background-color: #d1ecf1; color: #0c5460; border-color: #bee5eb; }
+
+
+/* Forms */
+.form-container, .table-container {
+    background: #fff;
+    padding: 25px;
+    margin-bottom: 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+.form-container h2, .table-container h2 {
+    margin-top: 0;
+    color: #0779e4; /* Orijinal renk */
+    border-bottom: 2px solid #eee;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+.form-group input[type="text"],
+.form-group input[type="password"],
+.form-group select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+.form-group input[type="checkbox"] { /* Checkbox için daha iyi hizalama */
+    width: auto;
+    margin-right: 5px;
+    vertical-align: middle;
+}
+label[for="is_authorized"], 
+label[for="is_authorized_edit"] { /* Checkbox label'ları için */
+    display: inline-block;
+    font-weight: normal;
+    vertical-align: middle;
+}
+
+
+.btn {
+    display: inline-block;
+    padding: 10px 20px;
+    font-size: 1em;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    outline: none;
+    color: #fff;
+    background-color: #0779e4; /* Orijinal renk */
+    border: none;
+    border-radius: 4px;
+    box-shadow: 0 2px #0568bf; /* Orijinal gölge */
+}
+.btn:hover { background-color: #0568bf } /* Orijinal hover */
+.btn:active {
+    background-color: #0568bf;
+    box-shadow: 0 1px #034f9a; /* Orijinal active */
+    transform: translateY(1px);
+}
+.btn-primary { background-color: #007bff; } .btn-primary:hover { background-color: #0069d9; }
+.btn-danger { background-color: #dc3545; } .btn-danger:hover { background-color: #c82333; }
+.btn-warning { background-color: #ffc107; color: #212529;} .btn-warning:hover { background-color: #e0a800;} /* Bootstrap warning gibi */
+.btn-success { background-color: #28a745; } .btn-success:hover { background-color: #218838; }
+.btn-sm { padding: 5px 10px; font-size: 0.9em; }
+
+
+/* Tables */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+table th, table td {
+    border: 1px solid #ddd;
+    padding: 10px 12px; /* Biraz daha az padding */
+    text-align: left;
+    vertical-align: middle; /* Dikey ortalama */
+}
+table th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+    color: #333;
+}
+table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+table tr:hover {
+    background-color: #f1f1f1;
+}
+/* Tablo içindeki resimler için */
+table img {
+    max-width: 80px;
+    max-height: 50px;
+    border:1px solid #ccc;
+    border-radius:3px;
+    object-fit:cover; /* Resmin orantısını koruyarak sığdırır */
+}
+/* Yetki durumu için özel stiller */
+.status-authorized { color: green; font-weight: bold; }
+.status-unauthorized { color: red; font-weight: bold; }
+
+
+/* Alerts */
+.alert {
+    padding: 15px;
+    margin-bottom: 20px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+}
+.alert-success { color: #155724; background-color: #d4edda; border-color: #c3e6cb; }
+.alert-danger  { color: #721c24; background-color: #f8d7da; border-color: #f5c6cb; }
+.alert-info    { color: #0c5460; background-color: #d1ecf1; border-color: #bee5eb; }
+.alert-warning { color: #856404; background-color: #fff3cd; border-color: #ffeeba; }
+
+/* Filtreleme Formu (Plaka Yönetimi) */
+.filter-form {
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color:#f8f9fa;
+    border-radius:5px;
+    border: 1px solid #dee2e6;
+}
+.filter-form .form-group {
+    margin-bottom: 0; /* Flex ile hizalandığı için alttaki boşluğu kaldır */
+}
+.filter-form div[style*="display: flex"] { /* Flex container için */
+    flex-wrap: wrap; /* Küçük ekranlarda alt alta geçsin */
+    gap: 10px; /* Elemanlar arası boşluk */
+    align-items: flex-end; /* Elemanları alta hizala (butonla inputlar aynı hizada olsun) */
+}
+.filter-form .form-group {
+    flex: 1 1 180px; /* Esnek büyüme, temel genişlik */
+}
+.filter-form button[type="submit"] {
+    height: calc(2.25rem + 2px + 10px); /* Input yüksekliğine yakın bir yükseklik (padding dahil) */
+    padding: 8px 15px; /* Buton padding'i */
+    flex-shrink: 0; /* Küçülmesin */
+}
+
+
+/* Plaka Düzeltme Formu (index.html) */
+#plate-correction-section { 
+    display: none; /* Başlangıçta gizli */
+    margin-top: 15px; 
+    padding: 15px; 
+    background-color: #fff8dc; /* Cornsilk gibi bir renk */
+    border:1px solid #f0e68c; /* Daha yumuşak bir kenarlık */
+    border-radius:5px; 
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+#plate-correction-section h4 { 
+    margin-top:0; 
+    color: #8B4513; /* SaddleBrown gibi bir renk */
+    margin-bottom: 10px;
+}
+#plate-correction-section .form-group input[type="text"] { 
+    font-size: 1.2em; 
+    text-transform: uppercase; /* Plakalar büyük harf olsun */
+    font-weight: bold;
+    border-color: #D2B48C; /* Tan */
+}
+#plate-correction-section p {
+    margin-bottom: 10px;
+}
+.plate-display-inline { /* OCR ile okunan plaka için */
+    font-weight:bold; 
+    color: #D2691E; /* Chocolate */
+    background-color: #FFF0E1; /* SeaShell */
+    padding: 2px 5px; 
+    border-radius: 3px;
+    border: 1px dashed #D2B48C;
+}
+
+
+/* Footer */
+footer {
+    background: #333;
+    color: #fff;
+    text-align: center;
+    padding: 20px 0;
+    margin-top: 30px;
+}
+
+/* Ayarlar Sayfası - ROI Seçimi */
+#roi-setup-panel { 
+    background-color: #fff; 
+    padding:20px; 
+    border-radius:8px; 
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+#roi-selection-container { 
+    position: relative; 
+    display: inline-block; /* Resim ve canvas'ı sarması için */
+    border: 1px solid #ddd; 
+    background-color: #222; /* Canvas arkası için koyu renk */
+    margin: 15px auto; /* Ortalama */
+    /* max-width ayarı JS'den gelen frame_width ile ayarlanıyor (img etiketi üzerinden) */
+}
+#roi-frame-img { 
+    display:block; /* Altında boşluk olmasın */
+    max-width:100%; /* Konteynerine sığsın */
+    height:auto; 
+}
+#roi-canvas { 
+    position: absolute; 
+    top: 0; 
+    left: 0; 
+    cursor: crosshair; 
+}
+
+
+/* Responsive Ayarlamalar */
+@media (max-width: 768px) {
+    nav ul li { display: block; margin: 10px 0; text-align: center; }
+    nav .container, .container { width: 95%; padding: 0 10px;}
+    .form-container, .table-container, #roi-setup-panel { padding: 15px; }
+    
+    .filter-form div[style*="display: flex"] .form-group,
+    .filter-form div[style*="display: flex"] button {
+        flex-basis: 100% !important; /* Filtre elemanları alt alta */
+        margin-bottom: 10px;
+    }
+    .filter-form div[style*="display: flex"] button {
+        width: 100%; /* Buton da tam genişlik */
+    }
+
+    .header-section h1 { font-size: 1.6em; }
+    #video_feed_img { max-height: 60vh; } /* Mobil için video yüksekliğini biraz daha kısıtla */
+}

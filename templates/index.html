@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+{% block title %}Canlı İzleme - PlateVision{% endblock %}
+
+{% block head_extra %}
+<style>
+    /* Ana içerik ve yan panel için flex düzeni */
+    .main-content-wrapper {
+        display: flex;
+        flex-wrap: wrap; /* Küçük ekranlarda alt alta geçsin */
+        gap: 20px; /* Sütunlar arası boşluk */
+    }
+    .live-feed-column {
+        flex: 2; /* Video akışı daha fazla yer kaplasın */
+        min-width: 300px; /* Minimum genişlik */
+    }
+    .activity-sidebar {
+        flex: 1; /* Yan panel daha az yer kaplasın */
+        min-width: 280px; /* Minimum genişlik */
+        background-color: #f9f9f9;
+        padding: 15px;
+        border-radius: 5px;
+        border: 1px solid #eee;
+        max-height: 80vh; /* Yüksekliği video ile benzer olsun */
+        overflow-y: auto; /* Gerekirse kaydırma çubuğu */
+    }
+    .activity-sidebar h4 {
+        margin-top: 0;
+        color: #333;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 8px;
+    }
+    .log-item {
+        font-size: 0.85em;
+        padding: 8px 0;
+        border-bottom: 1px dashed #eee;
+    }
+    .log-item:last-child {
+        border-bottom: none;
+    }
+    .log-item .log-time { font-weight: bold; color: #555; display: block; margin-bottom: 3px;}
+    .log-item .log-event { color: #0779e4; }
+    .log-item .log-plate { font-style: italic; color: #e74c3c; }
+    /* .log-item .log-details-small { font-size: 0.9em; color: #777; word-break: break-all; } */
+    .log-item img.log-thumbnail { 
+        max-width: 60px; max-height: 40px; border-radius: 3px; 
+        float: right; margin-left: 5px; border: 1px solid #ccc;
+    }
+
+    #plate-correction-section { 
+        display: none; /* Başlangıçta gizli */
+        margin-top: 15px; padding: 15px; background-color: #fff8dc; 
+        border:1px solid #f0e68c; border-radius:5px; box-shadow:0 1px 3px rgba(0,0,0,0.1);
+    }
+    #plate-correction-section h4 { margin-top:0; color:#8B4513; margin-bottom:10px; }
+    #plate-correction-section .form-group input[type="text"] { font-size:1.2em; text-transform:uppercase; font-weight:bold; border-color:#D2B48C; }
+    .plate-display-inline { font-weight:bold; color:#D2691E; background-color:#FFF0E1; padding:2px 5px; border-radius:3px; border:1px dashed #D2B48C; }
+
+    @media (max-width: 992px) { 
+        .live-feed-column { flex-basis: 100%; }
+        .activity-sidebar { flex-basis: 100%; max-height: 300px; margin-top: 20px; }
+    }
+
+    #video_feed_img {
+        display: block; /* Kenar boşlukları ve hizalamayı kolaylaştırır */
+        width: auto;    /* Genişlik otomatik ayarlansın */
+        max-width: 100%; /* Konteynerinden taşmasın */
+        max-height: 50vh; /* YENİ: Ekran yüksekliğinin %60'ı kadar maksimum yükseklik */
+                          /* Bu değeri istediğiniz gibi ayarlayın (örn: 400px, 70vh, vb.) */
+        object-fit: contain; /* Resim taşmadan, en/boy oranını koruyarak sığar */
+        margin-left: auto;  /* Ortalama (eğer width < max-width ise) */
+        margin-right: auto; /* Ortalama */
+        border: 1px solid #444;
+        border-radius: 4px;
+        background-color: #000;
+    }
+
+    .video-container { /* Konteyneri de video boyutuna göre ayarlayalım */
+        text-align: center;
+        margin-bottom: 15px;
+        background-color: #000;
+        padding: 8px;
+        border-radius: 6px;
+        width: 100%; /* Ana sütuna göre genişlik */
+        /* max-width değeri videonun maksimum genişliğini belirler,
+           #video_feed_img buna göre sığacaktır. */
+        max-width: 720px; /* Örnek bir maksimum genişlik, bu da ayarlanabilir */
+        margin-left: auto;
+        margin-right: auto;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="header-section">
+    <h1>Canlı Araç Takibi</h1>
+    {# current_roi_for_logic app.py'deki index rotasından geliyor #}
+    {% if current_roi_for_logic and current_roi_for_logic|length == 4 %}
+        <p><small style="color: green; font-weight:bold;">Aktif bir ROI alanı devrede.</small></p>
+    {% else %}
+        <p><small style="color: orange; font-weight:bold;">Uyarı: ROI alanı tanımlanmamış. <a href="{{ url_for('settings_page_route') }}">Ayarlar'dan ROI tanımlayın.</a></small></p>
+    {% endif %}
+</div>
+
+<div class="main-content-wrapper">
+    <div class="live-feed-column">
+        <div class="video-container">
+            <img id="video_feed_img" src="{{ url_for('video_feed_route') }}" alt="Video Akışı Yükleniyor...">
+        </div>
+        <div id="status-area" class="status-box neutral">Sistem durumu yükleniyor...</div>
+        
+        <!-- Plaka Düzeltme Formu (JS ile gösterilip gizlenecek) -->
+        <div id="plate-correction-section">
+            <h4>Plaka Düzeltme (Son Tespit Edilen Kamyon)</h4>
+            <p>Otomatik Okunan Plaka: <strong id="ocr-plate-display-correction" class="plate-display-inline">N/A</strong></p>
+            <form id="plate-correction-form" method="POST" action="{{ url_for('correct_plate_action_route') }}">
+                <input type="hidden" id="original_ocr_plate_hidden" name="original_ocr_plate" value="">
+                <input type="hidden" id="track_id_for_correction_hidden" name="track_id_for_correction" value=""> {# YENİ GİZLİ ALAN #}
+                <div class="form-group">
+                    <label for="corrected_plate_number">Doğru Plakayı Girin:</label>
+                    <input type="text" id="corrected_plate_number" name="corrected_plate_number" class="form-control" placeholder="PLAKA GİRİN" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Düzeltmeyi Kaydet</button>
+                <button type="button" id="cancel-correction-btn" class="btn btn-warning" style="margin-left: 10px;">İptal</button>
+            </form>
+        </div>
+    </div>
+
+    
+</div>
+{% endblock %}
+
+{% block scripts_extra %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const statusArea = document.getElementById('status-area');
+    const plateCorrectionSection = document.getElementById('plate-correction-section');
+    const ocrPlateDisplayCorrection = document.getElementById('ocr-plate-display-correction');
+    const correctedPlateInput = document.getElementById('corrected_plate_number');
+    const originalOcrHiddenInput = document.getElementById('original_ocr_plate_hidden');
+    const trackIdHiddenInput = document.getElementById('track_id_for_correction_hidden'); // YENİ DEĞİŞKEN
+    const cancelCorrectionBtn = document.getElementById('cancel-correction-btn');
+    const correctionForm = document.getElementById('plate-correction-form');
+
+    let lastTruckInfoForCorrectionJS = null; 
+
+    function fetchStatus() {
+        fetch("{{ url_for('get_status_route') }}")
+            .then(response => response.ok ? response.json() : Promise.reject('Network error'))
+            .then(data => {
+                if (data) {
+                    statusArea.textContent = data.text_message || 'Durum bilgisi yok.';
+                    statusArea.className = 'status-box ' + (data.message_class || 'neutral');
+
+                    const truckInfo = data.last_truck_info_for_correction;
+                    if (truckInfo && data.detected_vehicle_type === 'truck') {
+                        // Formu sadece yeni bir kamyon için veya ocr sonucu değiştiyse güncelle/göster
+                        let showOrUpdateForm = false;
+                        if (!lastTruckInfoForCorrectionJS) { 
+                            showOrUpdateForm = true;
+                        } else if (lastTruckInfoForCorrectionJS.track_id !== truckInfo.track_id) { 
+                            showOrUpdateForm = true;
+                        } else if (lastTruckInfoForCorrectionJS.ocr_read_plate !== truckInfo.ocr_read_plate) {
+                            showOrUpdateForm = true;
+                        }
+                        // Veya form zaten açıksa ve track_id aynıysa, sadece ocr_read_plate'i güncelle (eğer değiştiyse)
+                        else if (plateCorrectionSection.style.display === 'block' && lastTruckInfoForCorrectionJS.track_id === truckInfo.track_id) {
+                            if (ocrPlateDisplayCorrection.textContent !== (truckInfo.ocr_read_plate || "Okunamadı")) {
+                                ocrPlateDisplayCorrection.textContent = truckInfo.ocr_read_plate || "Okunamadı";
+                                originalOcrHiddenInput.value = truckInfo.ocr_read_plate || "";
+                                // Kullanıcı manuel bir şey yazmadıysa inputu güncelle
+                                if (correctedPlateInput.value === lastTruckInfoForCorrectionJS.ocr_read_plate || correctedPlateInput.value === "") {
+                                   correctedPlateInput.value = truckInfo.ocr_read_plate || "";
+                                }
+                            }
+                            // track_id'yi her zaman güncel tut (gerçi değişmemesi lazım bu durumda)
+                            trackIdHiddenInput.value = truckInfo.track_id || "";
+                        }
+
+
+                        if (showOrUpdateForm) {
+                            ocrPlateDisplayCorrection.textContent = truckInfo.ocr_read_plate || "Okunamadı";
+                            originalOcrHiddenInput.value = truckInfo.ocr_read_plate || "";
+                            trackIdHiddenInput.value = truckInfo.track_id || ""; // Track ID'yi gizli alana set et
+                            correctedPlateInput.value = truckInfo.ocr_read_plate || ""; 
+                            correctedPlateInput.placeholder = truckInfo.ocr_read_plate ? "Düzeltin veya olduğu gibi kaydedin" : "PLAKA GİRİN (Okunamadı)";
+                            plateCorrectionSection.style.display = 'block';
+                        }
+                        lastTruckInfoForCorrectionJS = truckInfo;
+                    } else { // Kamyon yoksa veya son bilgi kamyon değilse formu gizle
+                        plateCorrectionSection.style.display = 'none';
+                        lastTruckInfoForCorrectionJS = null;
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Durum güncelleme hatası:', error);
+                if (statusArea) {
+                    statusArea.textContent = 'Durum bilgisi sunucudan alınamadı.';
+                    statusArea.className = 'status-box danger';
+                }
+                if(plateCorrectionSection) plateCorrectionSection.style.display = 'none';
+            });
+    }
+
+    if (statusArea) { 
+        setInterval(fetchStatus, 2500); 
+        fetchStatus(); 
+    }
+
+    if (cancelCorrectionBtn) {
+        cancelCorrectionBtn.addEventListener('click', function() {
+            if(plateCorrectionSection) plateCorrectionSection.style.display = 'none';
+            // Backend'deki last_truck_info_for_correction bir sonraki farklı araçta veya
+            // araç kaybolduğunda process_frame_logic tarafından zaten temizlenecek.
+            // İsteğe bağlı olarak, burada backend'e bir "iptal" isteği gönderilebilir.
+        });
+    }
+    
+    if(correctionForm){
+        correctionForm.addEventListener('submit', function(event) {
+            // Form gönderilmeden önce inputu büyük harf yap ve boşlukları kaldır
+            if(correctedPlateInput) {
+                correctedPlateInput.value = correctedPlateInput.value.toUpperCase().replace(/\s+/g, '');
+                if (!correctedPlateInput.value) { // Boş plaka gönderilmesini engelle
+                    alert("Lütfen geçerli bir plaka girin.");
+                    event.preventDefault();
+                    return;
+                }
+            }
+            // Form gönderildikten sonra arayüzü hemen gizleyebiliriz.
+            // plateCorrectionSection.style.display = 'none'; // Opsiyonel, backend redirect yapacak.
+        });
+    }
+});
+</script>
+{% endblock %}

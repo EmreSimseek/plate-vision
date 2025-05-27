@@ -1,0 +1,54 @@
+<!-- PlateVision/templates/base.html -->
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}PlateVision - Araç Takip Sistemi{% endblock %}</title> {# Daha açıklayıcı bir başlık #}
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon"> {# Favicon ekleyebilirsiniz #}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block head_extra %}{% endblock %}
+</head>
+<body>
+    <nav>
+        <div class="container">
+            <a href="{{ url_for('index') }}" class="nav-brand">PlateVision</a>
+            <ul>
+                {# Navigasyon linklerine 'active' sınıfı ekleme (isteğe bağlı, CSS ile stil verilebilir) #}
+                <li class="{{ 'active' if request.endpoint == 'index' else '' }}"><a href="{{ url_for('index') }}">Canlı İzleme</a></li>
+                <li class="{{ 'active' if request.endpoint == 'manage_plates_route' else '' }}"><a href="{{ url_for('manage_plates_route') }}">Plaka Yönetimi</a></li>
+                <li class="{{ 'active' if request.endpoint == 'activity_logs_route' else '' }}"><a href="{{ url_for('activity_logs_route') }}">Aktivite Logları</a></li>
+                <li class="{{ 'active' if request.endpoint == 'settings_page_route' else '' }}"><a href="{{ url_for('settings_page_route') }}">Ayarlar</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container">
+        {# --- YENİ: Flash Mesajları Buraya Taşındı --- #}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="close-btn" data-dismiss-alert>×</button> {# Kapatma butonu için JS gerekebilir #}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        {# --- BİTTİ: Flash Mesajları --- #}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>© {{ now.year }} PlateVision Projesi</p>
+        </div>
+    </footer>
+
+    {# Genel JavaScript dosyası #}
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script> 
+    {# Her sayfaya özel ek JavaScript blokları #}
+    {% block scripts_extra %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Log Detayı #{{ log_entry.id if log_entry else 'Bilinmiyor' }} - PlateVision{% endblock %}
+
+{% block head_extra %}
+<style>
+    .detail-container { background: #fff; padding: 25px; margin-bottom: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+    .detail-container h2 { margin-top: 0; color: #0779e4; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 20px; }
+    .detail-list { list-style: none; padding: 0; }
+    .detail-list li { padding: 10px 0; border-bottom: 1px dashed #f0f0f0; display: flex; flex-wrap: wrap; }
+    .detail-list li:last-child { border-bottom: none; }
+    .detail-list li strong { display: inline-block; width: 200px; color: #555; font-weight: 600; flex-shrink: 0; margin-bottom: 5px;}
+    .detail-list li span { word-break: break-all; flex-grow: 1; }
+    .detail-image-container { margin-top: 25px; text-align: center; padding: 15px; background-color: #f8f9fa; border-radius: 5px; border: 1px solid #eee;}
+    .detail-image-container img { max-width: 100%; max-height: 70vh; border: 1px solid #ccc; border-radius: 4px; }
+    pre.json-details { 
+        background-color: #2b2b2b; color: #f8f8f2; 
+        padding: 15px; border-radius: 4px; white-space: pre-wrap; 
+        word-break: break-all; font-size: 0.9em; max-height: 400px; 
+        overflow-y: auto; border: 1px solid #444;
+        font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+    }
+    .image-pair { display: flex; gap: 15px; margin-top: 15px; flex-wrap: wrap; justify-content:center;}
+    .image-pair div { text-align: center; }
+    .image-pair img { max-width: 300px; max-height: 200px; border: 1px solid #ccc; margin-bottom: 5px;}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="header-section">
+    <h1>Aktivite Log Detayı #{{ log_entry.id if log_entry else 'Bilinmiyor' }}</h1>
+    <p><a href="{{ url_for('activity_logs_route', page=request.args.get('page', 1)) }}" class="btn btn-sm" style="background-color: #6c757d;">« Tüm Loglara Geri Dön</a></p>
+</div>
+
+{% if log_entry %}
+<div class="detail-container">
+    <h2>Olay Bilgileri</h2>
+    <ul class="detail-list">
+        <li><strong>Log ID:</strong> <span>{{ log_entry.id }}</span></li>
+        <li><strong>Zaman Damgası:</strong> <span>{{ log_entry.timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3] if log_entry.timestamp and hasattr(log_entry.timestamp, 'strftime') else (log_entry.timestamp or '-') }}</span></li>
+        <li><strong>Olay Türü:</strong> <span>{{ log_entry.event_type }}</span></li>
+        <li><strong>Plaka Numarası:</strong> <span>{{ log_entry.plate_number or 'Belirtilmemiş' }}</span></li>
+        <li><strong>Tespit Edilen Araç Türü:</strong> <span>{{ log_entry.vehicle_type_detected.upper() if log_entry.vehicle_type_detected else 'Belirtilmemiş' }}</span></li>
+    </ul>
+
+    <div class="image-pair">
+        {% if log_entry.image_path %}
+        <div>
+            <h5>Araç Görseli</h5>
+            <a href="{{ url_for('static', filename=log_entry.image_path) }}" target="_blank" title="Araç görselini yeni sekmede aç">
+                <img src="{{ url_for('static', filename=log_entry.image_path) }}" alt="Tespit Edilen Araç Görseli">
+            </a>
+        </div>
+        {% endif %}
+
+        {# OCR Girdi Resmi (eğer log detaylarında varsa) #}
+        {% if log_entry.details_parsed and log_entry.details_parsed.ocr_input_image_path %}
+        <div>
+            <h5>OCR Girdi Plaka Kesiti</h5>
+            <a href="{{ url_for('static', filename=log_entry.details_parsed.ocr_input_image_path) }}" target="_blank" title="OCR girdi resmini yeni sekmede aç">
+                <img src="{{ url_for('static', filename=log_entry.details_parsed.ocr_input_image_path) }}" alt="OCR Girdi Plaka Kesiti">
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+
+    {% if log_entry.details_parsed %}
+    <div style="margin-top: 25px;">
+        <h3>Ek Detaylar (JSON)</h3>
+        <pre class="json-details">{{ log_entry.details_parsed | tojson(indent=2, ensure_ascii=False) }}</pre>
+    </div>
+    {% elif log_entry.details %}
+    <div style="margin-top: 25px;">
+        <h3>Ek Detaylar (Ham Veri)</h3>
+        <pre class="json-details">{{ log_entry.details }}</pre>
+    </div>
+    {% endif %}
+</div>
+{% else %}
+<div class="alert alert-warning">Log kaydı bulunamadı veya geçerli bir ID değil.</div>
+{% endif %}
+
+{% endblock %}
