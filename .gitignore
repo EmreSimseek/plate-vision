@@ -1,0 +1,22 @@
+# Python bytecode, log, temp vs.
+__pycache__/
+*.py[cod]
+*.log
+*.tmp
+
+# Sanal ortam
+venv/
+.env/
+
+# IDE ayarları
+.vscode/
+.idea/
+
+# Projedeki modeller ve veriler (tüm içerik)
+models/
+data/
+
+# İhtiyaç yoksa diğer büyük klasörleri de ekleyebilirsiniz:
+# checkpoints/
+# outputs/
+# experiments/
